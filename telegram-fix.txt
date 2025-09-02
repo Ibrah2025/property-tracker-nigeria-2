@@ -1,0 +1,109 @@
+﻿    // TRY TO PARSE AS EXPENSE
+    const amount = parseAmount(text)
+    if (amount > 0) {
+      // Find project - case insensitive
+      const projects = await getDocs(collection(db, 'projects'))
+      let projectName = 'Unassigned'
+      
+      projects.forEach(doc => {
+        const data = doc.data()
+        // Check full name or first word of project name
+        const projectWords = data.name.toLowerCase().split(' ')
+        projectWords.forEach(word => {
+          if (text.toLowerCase().includes(word) && word.length > 2) {
+            projectName = data.name
+          }
+        })
+      })
+      
+      // Extract vendor - look for known vendors first, then capitalized words
+      let vendor = 'Unknown'
+      const vendors = await getDocs(collection(db, 'vendors'))
+      
+      // Check for known vendors (case insensitive)
+      vendors.forEach(doc => {
+        const data = doc.data()
+        if (text.toLowerCase().includes(data.name.toLowerCase())) {
+          vendor = data.name
+        }
+      })
+      
+      // If no known vendor found, look for capitalized words
+      if (vendor === 'Unknown') {
+        const words = text.split(' ')
+        // Common vendor names to check (case insensitive)
+        const commonVendors = ['dangote', 'bua', 'julius', 'berger', 'emos', 'schneider']
+        
+        for (const word of words) {
+          const cleanWord = word.toLowerCase()
+          if (commonVendors.includes(cleanWord)) {
+            // Capitalize properly
+            vendor = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            break
+          }
+          // Check if it's a capitalized word that's not a number or keyword
+          if (word[0] === word[0].toUpperCase() && 
+              !word.match(/^\d/) && 
+              !['k', 'm', 'cement', 'blocks', 'sand'].includes(cleanWord)) {
+            vendor = word
+            break
+          }
+        }
+      }
+      
+      // Extract category - case insensitive
+      let category = 'Other'
+      const categories = {
+        cement: 'Cement',
+        block: 'Blocks',
+        blocks: 'Blocks',
+        sand: 'Sand',
+        labour: 'Labour',
+        labor: 'Labour',
+        transport: 'Transport',
+        wood: 'Wood',
+        paint: 'Paint',
+        plumbing: 'Plumbing',
+        electrical: 'Electrical',
+        door: 'Doors/Windows',
+        doors: 'Doors/Windows',
+        window: 'Doors/Windows',
+        windows: 'Doors/Windows',
+        roofing: 'Roofing',
+        tiles: 'Tiles',
+        tile: 'Tiles',
+        iron: 'Iron/Steel',
+        steel: 'Iron/Steel',
+        rod: 'Iron/Steel',
+        rods: 'Iron/Steel',
+        granite: 'Granite',
+        marble: 'Marble',
+        pop: 'POP',
+        generator: 'Electrical',
+        pipe: 'Plumbing',
+        pipes: 'Plumbing',
+        wire: 'Electrical',
+        wires: 'Electrical',
+        wiring: 'Electrical'
+      }
+      
+      const lowerText = text.toLowerCase()
+      for (const [key, val] of Object.entries(categories)) {
+        if (lowerText.includes(key)) {
+          category = val
+          break
+        }
+      }
+      
+      const docRef = await addDoc(collection(db, 'expenses'), {
+        amount,
+        project: projectName,
+        vendor,
+        category,
+        source: 'telegram',
+        telegramUser: userName,
+        originalText: text,
+        createdAt: new Date().toISOString()
+      })
+      
+      session.lastExpenseId = docRef.id
