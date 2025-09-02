@@ -420,8 +420,8 @@ export default function HomePage() {
 
   const exportToPDF = async () => {
     try {
-      const jsPDF = (await import('jspdf')).default
-      await import('jspdf-autotable')
+      const { default: jsPDF } = await import('jspdf')
+      const { default: autoTable } = await import('jspdf-autotable')
       
       const doc = new jsPDF()
       
@@ -450,7 +450,7 @@ export default function HomePage() {
         e.category || 'Other'
       ])
       
-      doc.autoTable({
+      autoTable(doc, {
         head: [['Date', 'Amount', 'Project', 'Vendor', 'Category']],
         body: expensesData,
         startY: 70,
@@ -475,7 +475,7 @@ export default function HomePage() {
         ]
       })
       
-      doc.autoTable({
+      autoTable(doc, {
         head: [['Project', 'Budget', 'Spent', 'Remaining', 'Progress']],
         body: projectsData,
         startY: 25,
