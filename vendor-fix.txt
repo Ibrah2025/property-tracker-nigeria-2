@@ -1,0 +1,67 @@
+﻿      // Extract vendor - improved logic
+      let vendor = 'Unknown'
+      const vendors = await getDocs(collection(db, 'vendors'))
+      
+      // First, check for known vendors in database (case insensitive)
+      vendors.forEach(doc => {
+        const data = doc.data()
+        if (text.toLowerCase().includes(data.name.toLowerCase())) {
+          vendor = data.name
+        }
+      })
+      
+      // Common vendor names to prioritize (case insensitive)
+      const commonVendors = {
+        'dangote': 'Dangote',
+        'bua': 'BUA', 
+        'julius': 'Julius Berger',
+        'berger': 'Julius Berger',
+        'emos': 'Emos',
+        'schneider': 'Schneider',
+        'lafarge': 'Lafarge',
+        'elephant': 'Elephant Cement',
+        'unicem': 'Unicem',
+        'ashaka': 'Ashaka'
+      }
+      
+      // Check for common vendors if not found in database
+      if (vendor === 'Unknown') {
+        const lowerText = text.toLowerCase()
+        for (const [key, name] of Object.entries(commonVendors)) {
+          if (lowerText.includes(key)) {
+            vendor = name
+            break
+          }
+        }
+      }
+      
+      // If still no vendor found, look for last capitalized word that's NOT a project name
+      if (vendor === 'Unknown') {
+        const words = text.split(' ')
+        const projectKeywords = ['maitama', 'jabi', 'garki', 'katampe', 'asokoro', 'wuse']
+        
+        // Start from the end and work backwards
+        for (let i = words.length - 1; i >= 0; i--) {
+          const word = words[i]
+          const lowerWord = word.toLowerCase()
+          
+          // Skip if it's a number, amount, or project keyword
+          if (word.match(/^\d/) || 
+              lowerWord.includes('k') || 
+              lowerWord.includes('m') ||
+              projectKeywords.includes(lowerWord)) {
+            continue
+          }
+          
+          // Skip category words
+          if (['cement', 'blocks', 'sand', 'labour', 'transport', 'paint'].includes(lowerWord)) {
+            continue
+          }
+          
+          // If it's capitalized or all we have left, use it
+          if (word[0] === word[0].toUpperCase()) {
+            vendor = word
+            break
+          }
+        }
+      }
