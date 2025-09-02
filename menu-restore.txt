@@ -1,0 +1,53 @@
+﻿    // MENU COMMAND
+    if (cmd === '/start' || cmd === 'menu' || cmd === 'help') {
+      await sendMessage(chatId,
+        '<b> PROPERTY TRACKER - COMPLETE GUIDE</b>\n\n' +
+        
+        '<b>📊 EXPENSE MANAGEMENT</b>\n' +
+        '• <b>Add expense:</b> <code>500k cement Maitama Dangote</code>\n' +
+        '  Example: "300k blocks Jabi BUA" adds N300,000 blocks expense\n' +
+        ' <b>List expenses:</b> <code>list</code> - Shows last 10 expenses with numbers\n' +
+        ' <b>Edit expense:</b> <code>#3 800k</code> - Changes expense #3 to N800,000\n' +
+        ' <b>Delete expense:</b> <code>#3 delete</code> - Removes expense #3\n' +
+        '• <b>Cancel last:</b> <code>cancel</code> - Deletes your last added expense\n\n' +
+        
+        '<b> PROJECT MANAGEMENT</b>\n' +
+        ' <b>View projects:</b> <code>projects</code> - Lists all projects with numbers\n' +
+        ' <b>Add project:</b> <code>addproject Marina 35m Victoria Island</code>\n' +
+        '  Example: Creates "Marina" project with N35M budget\n' +
+        '• <b>Edit budget:</b> <code>project#1 40m</code> - Updates project #1 to N40M\n' +
+        ' <b>Delete project:</b> <code>project#1 delete</code> - Removes project #1\n' +
+        ' <b>Check balance:</b> <code>balance Maitama</code> - Shows budget vs spent\n\n' +
+        
+        '<b> VENDOR MANAGEMENT</b>\n' +
+        '• <b>View vendors:</b> <code>vendors</code> - Lists all vendors with numbers\n' +
+        '• <b>Add vendor:</b> <code>addvendor Dangote Supplier 08012345678</code>\n' +
+        '• <b>Edit vendor:</b> <code>vendor#1 08087654321</code> - Updates contact\n' +
+        ' <b>Delete vendor:</b> <code>vendor#1 delete</code> - Removes vendor #1\n' +
+        ' <b>Vendor summary:</b> <code>vendor Dangote</code> - Shows vendor stats\n\n' +
+        
+        '<b> ANALYTICS & REPORTS</b>\n' +
+        ' <b>Full summary:</b> <code>summary</code> - Overall totals and stats\n' +
+        '• <b>Weekly report:</b> <code>report week</code> - Last 7 days analysis\n' +
+        '• <b>Monthly report:</b> <code>report month</code> - Last 30 days analysis\n' +
+        ' <b>Search expenses:</b> <code>search cement</code> - Find by keyword\n' +
+        ' <b>Top vendors:</b> <code>top vendors</code> - Top 5 by spending\n' +
+        ' <b>Top categories:</b> <code>top categories</code> - Most spent areas\n' +
+        ' <b>Project report:</b> <code>report Maitama</code> - Specific project\n\n' +
+        
+        '<b> ALERTS & EXPORTS</b>\n' +
+        ' <b>Set alert:</b> <code>setalert Maitama 80</code> - Alert at 80% budget\n' +
+        ' <b>View alerts:</b> <code>alerts</code> - Shows active alerts\n' +
+        ' <b>Export data:</b> <code>export</code> - Get Excel download link\n' +
+        ' <b>Quick stats:</b> <code>stats</code> - Dashboard overview\n\n' +
+        
+        '<b> TIPS:</b>\n' +
+        ' Always use "list", "projects", or "vendors" first to see numbers\n' +
+        ' Use # with numbers for editing/deleting (e.g., #1, #2)\n' +
+        ' Amounts: 500k = N500,000 | 2m = N2,000,000\n' +
+        ' Categories: cement, blocks, sand, labour, transport, etc.\n\n' +
+        
+        'Type any command to start! Need help? Just type <code>menu</code>'
+      )
+      return NextResponse.json({ ok: true })
+    }
