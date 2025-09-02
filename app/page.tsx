@@ -11,6 +11,7 @@ export default function HomePage() {
   const [vendors, setVendors] = useState([])
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
+  const [isCreatingDefaults, setIsCreatingDefaults] = useState(false)
   const [activeTab, setActiveTab] = useState('dashboard')
   const [timeFilter, setTimeFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
@@ -55,7 +56,7 @@ export default function HomePage() {
   // Load data on mount
   useEffect(() => {
     fetchAllData()
-    const interval = setInterval(fetchAllData, 30000)
+    const interval = setInterval(fetchAllData, 300000)
     return () => clearInterval(interval)
   }, [])
 
@@ -76,7 +77,8 @@ export default function HomePage() {
       }))
       
       // Create default projects if none exist
-      if (projectsData.length === 0) {
+      if (projectsData.length === 0 && !isCreatingDefaults) {
+        setIsCreatingDefaults(true)
         const defaultProjects = [
           { 
             name: 'Maitama Heights', 
@@ -152,6 +154,7 @@ export default function HomePage() {
           id: doc.id,
           ...doc.data()
         }))
+        setIsCreatingDefaults(false)
       }
       
       setProjects(projectsData)
