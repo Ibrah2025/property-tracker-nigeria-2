@@ -14,6 +14,17 @@ export default function HomePage() {
     fetchData()
   }, [])
 
+  const formatMoney = (amount) => {
+    if (!amount) return '?0'
+    const millions = (amount / 1000000).toFixed(2)
+    return `?${millions} Million`
+  }
+
+  const formatThousands = (amount) => {
+    if (!amount) return '?0'
+    return `?${Math.round(amount / 1000).toLocaleString()}k`
+  }
+
   const fetchData = async () => {
     try {
       // Fetch projects
@@ -35,12 +46,10 @@ export default function HomePage() {
           { name: 'Wuse II Towers', budget: 30000000, location: 'Wuse II, Abuja' }
         ]
         
-        // Add default projects to Firebase
         for (const project of defaultProjects) {
           await addDoc(collection(db, 'projects'), project)
         }
         
-        // Fetch again
         projectsSnapshot = await getDocs(collection(db, 'projects'))
         projectsData = projectsSnapshot.docs.map(doc => ({
           id: doc.id,
@@ -79,6 +88,8 @@ export default function HomePage() {
     )
   }
 
+  const totalBudget = projects.reduce((sum, p) => sum + (p.budget || 0), 0)
+
   return (
     <div className="min-h-screen bg-gray-950 text-white p-6">
       <div className="max-w-7xl mx-auto">
@@ -88,7 +99,7 @@ export default function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-blue-600 rounded-lg p-6">
             <h3 className="text-lg opacity-80">Total Spent</h3>
-            <p className="text-3xl font-bold">?{(totalSpent/1000000).toFixed(2)}M</p>
+            <p className="text-2xl font-bold">{formatMoney(totalSpent)}</p>
             <p className="text-sm opacity-70">{expenses.length} expenses</p>
           </div>
           <div className="bg-green-600 rounded-lg p-6">
@@ -98,9 +109,7 @@ export default function HomePage() {
           </div>
           <div className="bg-purple-600 rounded-lg p-6">
             <h3 className="text-lg opacity-80">Total Budget</h3>
-            <p className="text-3xl font-bold">
-              ?{(projects.reduce((sum, p) => sum + (p.budget || 0), 0)/1000000).toFixed(2)}M
-            </p>
+            <p className="text-2xl font-bold">{formatMoney(totalBudget)}</p>
             <p className="text-sm opacity-70">Combined budget</p>
           </div>
         </div>
@@ -111,9 +120,10 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {projects.map(project => {
               // Calculate spent for this project
-              const projectExpenses = expenses.filter(e => 
-                e.project?.toLowerCase().includes(project.name.toLowerCase().split(' ')[0])
-              )
+              const projectExpenses = expenses.filter(e => {
+                const projectName = project.name.toLowerCase().split(' ')[0]
+                return e.project?.toLowerCase().includes(projectName)
+              })
               const spent = projectExpenses.reduce((sum, e) => sum + (e.amount || 0), 0)
               const progress = project.budget ? (spent / project.budget * 100) : 0
               
@@ -121,8 +131,8 @@ export default function HomePage() {
                 <div key={project.id} className="bg-gray-900 rounded-lg p-6">
                   <h3 className="text-xl font-semibold mb-4">{project.name}</h3>
                   <div className="space-y-2 text-gray-400">
-                    <p>Budget: ?{((project.budget || 0)/1000000).toFixed(2)}M</p>
-                    <p>Spent: ?{(spent/1000000).toFixed(2)}M</p>
+                    <p>Budget: {formatMoney(project.budget)}</p>
+                    <p>Spent: {formatMoney(spent)}</p>
                     <div className="mt-4">
                       <div className="flex justify-between text-sm mb-1">
                         <span>Progress</span>
@@ -130,12 +140,12 @@ export default function HomePage() {
                       </div>
                       <div className="w-full bg-gray-800 rounded-full h-2">
                         <div 
-                          className="bg-blue-600 h-2 rounded-full"
+                          className="bg-blue-600 h-2 rounded-full transition-all"
                           style={{ width: `${Math.min(progress, 100)}%` }}
                         />
                       </div>
                     </div>
-                    <p className="text-sm">{projectExpenses.length} transactions</p>
+                    <p className="text-sm mt-2">{projectExpenses.length} transactions</p>
                   </div>
                 </div>
               )
@@ -167,7 +177,7 @@ export default function HomePage() {
                 ) : (
                   expenses.map(expense => (
                     <tr key={expense.id} className="border-t border-gray-800">
-                      <td className="px-6 py-4">?{((expense.amount || 0)/1000).toFixed(0)}k</td>
+                      <td className="px-6 py-4">{formatThousands(expense.amount)}</td>
                       <td className="px-6 py-4">{expense.project || 'Unassigned'}</td>
                       <td className="px-6 py-4">{expense.vendor || 'Unknown'}</td>
                       <td className="px-6 py-4">{expense.category || 'Other'}</td>
@@ -182,10 +192,10 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Add Refresh Button */}
+        {/* Refresh Button */}
         <button 
           onClick={() => window.location.reload()} 
-          className="fixed bottom-8 right-8 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-lg"
+          className="fixed bottom-8 right-8 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-lg transition-colors"
         >
           Refresh Data
         </button>
