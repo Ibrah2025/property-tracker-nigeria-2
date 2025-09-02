@@ -418,6 +418,82 @@ export default function HomePage() {
     }
   }
 
+  const exportToPDF = async () => {
+    try {
+      const jsPDF = (await import('jspdf')).default
+      await import('jspdf-autotable')
+      
+      const doc = new jsPDF()
+      
+      // Title
+      doc.setFontSize(20)
+      doc.text('Property Tracker Report', 14, 15)
+      doc.setFontSize(10)
+      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 25)
+      
+      // Summary Stats
+      const stats = calculateStats()
+      doc.setFontSize(12)
+      doc.text('Summary Statistics', 14, 35)
+      doc.setFontSize(10)
+      doc.text(`Total Spent: ${formatMoney(stats.totalSpent)}`, 14, 42)
+      doc.text(`Total Budget: ${formatMoney(stats.totalBudget)}`, 14, 48)
+      doc.text(`Active Projects: ${stats.activeProjects}`, 14, 54)
+      doc.text(`Total Expenses: ${stats.totalExpenses}`, 14, 60)
+      
+      // Expenses Table
+      const expensesData = getFilteredExpenses().map(e => [
+        e.date || new Date(e.createdAt).toLocaleDateString(),
+        formatMoney(e.amount),
+        e.project || 'Unassigned',
+        e.vendor || 'Unknown',
+        e.category || 'Other'
+      ])
+      
+      doc.autoTable({
+        head: [['Date', 'Amount', 'Project', 'Vendor', 'Category']],
+        body: expensesData,
+        startY: 70,
+        theme: 'grid',
+        headStyles: { fillColor: [31, 41, 55] }
+      })
+      
+      // Projects Summary - New Page
+      doc.addPage()
+      doc.setFontSize(16)
+      doc.text('Projects Summary', 14, 15)
+      
+      const projectsData = projects.map(p => {
+        const projectExpenses = getProjectExpenses(p.name)
+        const spent = projectExpenses.reduce((sum, e) => sum + (e.amount || 0), 0)
+        return [
+          p.name,
+          formatMoney(p.budget),
+          formatMoney(spent),
+          formatMoney(p.budget - spent),
+          `${((spent/p.budget)*100).toFixed(1)}%`
+        ]
+      })
+      
+      doc.autoTable({
+        head: [['Project', 'Budget', 'Spent', 'Remaining', 'Progress']],
+        body: projectsData,
+        startY: 25,
+        theme: 'grid',
+        headStyles: { fillColor: [31, 41, 55] }
+      })
+      
+      // Save PDF
+      const date = new Date().toISOString().split('T')[0]
+      doc.save(`PropertyTracker_${date}.pdf`)
+      
+      showNotification('success', 'PDF downloaded successfully')
+    } catch (error) {
+      console.error('Error exporting to PDF:', error)
+      showNotification('error', 'Failed to export PDF')
+    }
+  }
+
   // Export Function
   const exportToExcel = async () => {
     try {
@@ -1322,7 +1398,7 @@ export default function HomePage() {
                   Export to Excel
                 </button>
                 <button
-                  onClick={() => showNotification('info', 'PDF export coming soon')}
+                  onClick={exportToPDF}
                   className="px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
                 >
                   Export to PDF
