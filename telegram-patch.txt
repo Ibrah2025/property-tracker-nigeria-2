@@ -1,0 +1,140 @@
+﻿export async function POST(req) {
+  try {
+    const body = await req.json()
+    const message = body.message
+    if (!message) return NextResponse.json({ ok: true })
+    
+    const chatId = message.chat.id
+    const text = (message.text || '').trim()
+    const userName = message.from?.first_name || 'User'
+    const userId = message.from?.id
+    
+    if (!sessions.has(userId)) {
+      sessions.set(userId, { lastId: null, cache: [], projectCache: [] })
+    }
+    const session = sessions.get(userId)
+    
+    const cmd = text.toLowerCase()
+    
+    // MENU/HELP
+    if (cmd === '/start' || cmd === 'menu' || cmd === 'help') {
+      await sendMessage(chatId,
+        '<b>PROPERTY TRACKER BOT</b>\n\n' +
+        '<b>Expense Commands:</b>\n' +
+        'Add: <code>200k cement Maitama Dangote</code>\n' +
+        'List: <code>list</code> - Last 10 expenses\n' +
+        'Summary: <code>summary</code> - Overall totals\n' +
+        'Cancel: <code>cancel</code> - Delete last entry\n' +
+        'Search: <code>search Dangote</code>\n' +
+        'Edit: <code>#3 500k</code> - Edit entry #3\n' +
+        'Delete: <code>#3 delete</code> - Delete entry #3\n\n' +
+        '<b>Project Commands:</b>\n' +
+        'Projects: <code>projects</code> - List all projects\n' +
+        'Add Project: <code>addproject Name 15m Location</code>\n' +
+        'Edit Project: <code>project#2 20m</code> - Update budget\n' +
+        'Delete Project: <code>project#2 delete</code>\n' +
+        'Balance: <code>balance Maitama</code>\n\n' +
+        '<b>Categories:</b> Cement, Blocks, Sand, Labour, Transport, etc.'
+      )
+      return NextResponse.json({ ok: true })
+    }
+    
+    // PROJECTS LIST
+    if (cmd === 'projects') {
+      const projects = await getDocs(collection(db, 'projects'))
+      
+      if (projects.empty) {
+        await sendMessage(chatId, 'No projects found')
+        return NextResponse.json({ ok: true })
+      }
+      
+      session.projectCache = []
+      let text = '<b>PROJECTS:</b>\n\n'
+      let index = 1
+      let totalBudget = 0
+      
+      projects.forEach(doc => {
+        const data = doc.data()
+        session.projectCache.push({ id: doc.id, ...data })
+        text += `<b>#${index}</b> ${data.name}\n`
+        text += `    Budget: ${formatMoney(data.budget)}\n`
+        text += `    Location: ${data.location || 'N/A'}\n`
+        text += `    Status: ${data.status || 'active'}\n\n`
+        totalBudget += data.budget || 0
+        index++
+      })
+      
+      text += `<b>Total Budget: ${formatMoney(totalBudget)}</b>`
+      await sendMessage(chatId, text)
+      return NextResponse.json({ ok: true })
+    }
+    
+    // ADD PROJECT
+    if (cmd.startsWith('addproject ')) {
+      const parts = text.substring(11).split(' ')
+      if (parts.length < 2) {
+        await sendMessage(chatId, 'Format: addproject ProjectName 15m Location')
+        return NextResponse.json({ ok: true })
+      }
+      
+      const name = parts[0]
+      const budget = parseAmount(parts[1])
+      const location = parts.slice(2).join(' ') || 'Abuja'
+      
+      if (!budget) {
+        await sendMessage(chatId, 'Invalid budget amount')
+        return NextResponse.json({ ok: true })
+      }
+      
+      const docRef = await addDoc(collection(db, 'projects'), {
+        name,
+        budget,
+        location,
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        createdBy: userName
+      })
+      
+      await sendMessage(chatId, 
+        `<b>PROJECT CREATED!</b>\n\n` +
+        `Name: ${name}\n` +
+        `Budget: ${formatMoney(budget)}\n` +
+        `Location: ${location}\n` +
+        `Status: Active`
+      )
+      return NextResponse.json({ ok: true })
+    }
+    
+    // PROJECT COMMANDS (#1 delete, #1 20m)
+    const projectMatch = cmd.match(/^project#(\d+)\s*(.*)/)
+    if (projectMatch) {
+      const num = parseInt(projectMatch[1]) - 1
+      const action = projectMatch[2].trim()
+      
+      if (!session.projectCache[num]) {
+        await sendMessage(chatId, 'Invalid project #. Type PROJECTS first')
+        return NextResponse.json({ ok: true })
+      }
+      
+      const target = session.projectCache[num]
+      
+      if (action === 'delete') {
+        await deleteDoc(doc(db, 'projects', target.id))
+        await sendMessage(chatId, `Deleted project: ${target.name}`)
+      } else {
+        const budget = parseAmount(action)
+        if (budget) {
+          await updateDoc(doc(db, 'projects', target.id), { 
+            budget,
+            updatedAt: new Date().toISOString()
+          })
+          await sendMessage(chatId, `Updated ${target.name} budget to ${formatMoney(budget)}`)
+        } else {
+          await sendMessage(chatId, 'Usage: project#1 delete or project#1 20m')
+        }
+      }
+      return NextResponse.json({ ok: true })
+    }
+    
+    // Keep all existing commands (LIST, SUMMARY, BALANCE, etc.) below...
+    // [Rest of the existing code remains the same]
