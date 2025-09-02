@@ -1185,6 +1185,61 @@ export default function HomePage() {
               </div>
             </div>
 
+            {/* Project-Level Analytics */}
+            <div className="mb-8">
+              <h3 className="text-xl font-semibold mb-4">Individual Project Analysis</h3>
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {projects.map(project => {
+                  const projectExpenses = expenses.filter(e => e.project === project.name)
+                  const spent = projectExpenses.reduce((sum, e) => sum + (e.amount || 0), 0)
+                  const progress = project.budget ? (spent / project.budget * 100) : 0
+                  
+                  const projCategories = {}
+                  projectExpenses.forEach(e => {
+                    projCategories[e.category || 'Other'] = (projCategories[e.category || 'Other'] || 0) + e.amount
+                  })
+                  
+                  const topCategory = Object.entries(projCategories).sort((a, b) => b[1] - a[1])[0]
+                  
+                  return (
+                    <div key={project.id} className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                      <h4 className="text-lg font-semibold mb-4">{project.name}</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Budget</span>
+                          <span>{formatMoney(project.budget)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Spent</span>
+                          <span className={progress >= 90 ? 'text-red-400' : progress >= 70 ? 'text-yellow-400' : 'text-green-400'}>
+                            {formatMoney(spent)} ({progress.toFixed(1)}%)
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Top Category</span>
+                          <span>{topCategory ? topCategory[0] : 'None'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Transactions</span>
+                          <span>{projectExpenses.length}</span>
+                        </div>
+                        <div className="w-full bg-gray-800 rounded-full h-2 mt-3">
+                          <div 
+                            className={`h-2 rounded-full ${
+                              progress >= 90 ? 'bg-red-500' : 
+                              progress >= 70 ? 'bg-yellow-500' : 
+                              'bg-green-500'
+                            }`}
+                            style={{ width: `${Math.min(progress, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
             {/* Top Statistics */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
