@@ -23,7 +23,6 @@ export default function HomePage() {
   const [editingProject, setEditingProject] = useState(null)
   const [editingVendor, setEditingVendor] = useState(null)
   const [viewingProject, setViewingProject] = useState(null)
-  const [viewingProject, setViewingProject] = useState(null)
   const [notifications, setNotifications] = useState([])
   
   // Form States
@@ -178,6 +177,14 @@ export default function HomePage() {
     if (amount >= 1000000) return `N${(amount/1000000).toFixed(2)} Million`
     if (amount >= 1000) return `N${Math.round(amount/1000).toLocaleString()}k`
     return `N${amount.toLocaleString()}`
+  }
+
+  const formatDate = (date) => {
+    return new Date(date).toLocaleDateString('en-GB', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric' 
+    })
   }
 
   const getProjectExpenses = (projectName) => {
