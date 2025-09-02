@@ -460,10 +460,48 @@ export default function HomePage() {
       // Create workbook
       const wb = XLSX.utils.book_new()
       
-      // Add sheets
+      // Add sheets with auto-width
       const wsExpenses = XLSX.utils.json_to_sheet(expensesData)
       const wsProjects = XLSX.utils.json_to_sheet(projectsData)
       const wsVendors = XLSX.utils.json_to_sheet(vendorsData)
+      
+      // Auto-adjust column widths for Expenses sheet
+      const expenseCols = [
+        { wch: 12 }, // Date
+        { wch: 12 }, // Amount
+        { wch: 20 }, // Project
+        { wch: 15 }, // Vendor
+        { wch: 12 }, // Category
+        { wch: 30 }, // Description
+        { wch: 10 }  // Source
+      ]
+      wsExpenses['!cols'] = expenseCols
+      
+      // Auto-adjust column widths for Projects sheet
+      const projectCols = [
+        { wch: 20 }, // Name
+        { wch: 12 }, // Budget
+        { wch: 12 }, // Spent
+        { wch: 12 }, // Remaining
+        { wch: 10 }, // Progress
+        { wch: 10 }, // Status
+        { wch: 20 }, // Location
+        { wch: 20 }, // Contractor
+        { wch: 12 }, // StartDate
+        { wch: 12 }  // EndDate
+      ]
+      wsProjects['!cols'] = projectCols
+      
+      // Auto-adjust column widths for Vendors sheet
+      const vendorCols = [
+        { wch: 20 }, // Name
+        { wch: 15 }, // Type
+        { wch: 15 }, // Contact
+        { wch: 25 }, // Email
+        { wch: 15 }, // TotalTransactions
+        { wch: 12 }  // TotalSpent
+      ]
+      wsVendors['!cols'] = vendorCols
       
       XLSX.utils.book_append_sheet(wb, wsExpenses, 'Expenses')
       XLSX.utils.book_append_sheet(wb, wsProjects, 'Projects')
