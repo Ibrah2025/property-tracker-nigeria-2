@@ -15,14 +15,14 @@ export default function HomePage() {
   }, [])
 
   const formatMoney = (amount) => {
-    if (!amount) return '?0'
+    if (!amount) return 'N0'
     const millions = (amount / 1000000).toFixed(2)
-    return `?${millions} Million`
+    return `N${millions} Million`
   }
 
   const formatThousands = (amount) => {
-    if (!amount) return '?0'
-    return `?${Math.round(amount / 1000).toLocaleString()}k`
+    if (!amount) return 'N0'
+    return `N${Math.round(amount / 1000).toLocaleString()}k`
   }
 
   const fetchData = async () => {
