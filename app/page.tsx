@@ -11,7 +11,7 @@ export default function HomePage() {
   const [vendors, setVendors] = useState([])
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
-  const [isCreatingDefaults, setIsCreatingDefaults] = useState(false)
+  // Removed auto-creation flag
   const [activeTab, setActiveTab] = useState('dashboard')
   const [timeFilter, setTimeFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
@@ -76,86 +76,7 @@ export default function HomePage() {
         ...doc.data()
       }))
       
-      // Create default projects if none exist
-      if (projectsData.length === 0 && !isCreatingDefaults) {
-        setIsCreatingDefaults(true)
-        const defaultProjects = [
-          { 
-            name: 'Maitama Heights', 
-            budget: 15000000, 
-            location: 'Maitama, Abuja',
-            status: 'active',
-            startDate: '2024-01-01',
-            endDate: '2024-12-31',
-            contractor: 'BuildCon Nigeria Ltd',
-            description: 'Luxury residential complex'
-          },
-          { 
-            name: 'Garki Site', 
-            budget: 12000000, 
-            location: 'Garki, Abuja',
-            status: 'active',
-            startDate: '2024-02-01',
-            endDate: '2024-11-30',
-            contractor: 'Premier Construction',
-            description: 'Commercial development'
-          },
-          { 
-            name: 'Jabi Lakeside', 
-            budget: 25000000, 
-            location: 'Jabi, Abuja',
-            status: 'active',
-            startDate: '2024-01-15',
-            endDate: '2025-01-14',
-            contractor: 'Lakeside Developers',
-            description: 'Waterfront properties'
-          },
-          { 
-            name: 'Asokoro Residences', 
-            budget: 18000000, 
-            location: 'Asokoro, Abuja',
-            status: 'active',
-            startDate: '2024-03-01',
-            endDate: '2024-12-31',
-            contractor: 'Elite Builders',
-            description: 'High-end residential estate'
-          },
-          { 
-            name: 'Katampe Hills', 
-            budget: 20000000, 
-            location: 'Katampe, Abuja',
-            status: 'active',
-            startDate: '2024-01-01',
-            endDate: '2025-06-30',
-            contractor: 'Hilltop Construction',
-            description: 'Hillside development project'
-          },
-          { 
-            name: 'Wuse II Towers', 
-            budget: 30000000, 
-            location: 'Wuse II, Abuja',
-            status: 'active',
-            startDate: '2024-02-15',
-            endDate: '2025-02-14',
-            contractor: 'Tower Builders Ltd',
-            description: 'Twin tower complex'
-          }
-        ]
-        
-        for (const project of defaultProjects) {
-          await addDoc(collection(db, 'projects'), {
-            ...project,
-            createdAt: new Date().toISOString()
-          })
-        }
-        
-        projectsSnapshot = await getDocs(collection(db, 'projects'))
-        projectsData = projectsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }))
-        setIsCreatingDefaults(false)
-      }
+      // Projects loaded from database - no default creation
       
       setProjects(projectsData)
       
