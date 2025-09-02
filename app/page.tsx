@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore'
+import { collection, getDocs, addDoc, query, orderBy, limit } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 
 export default function HomePage() {
@@ -17,21 +17,22 @@ export default function HomePage() {
   const fetchData = async () => {
     try {
       // Fetch projects
-      const projectsSnapshot = await getDocs(collection(db, 'projects'))
-      const projectsData = projectsSnapshot.docs.map(doc => ({
+      let projectsSnapshot = await getDocs(collection(db, 'projects'))
+      let projectsData = projectsSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }))
       
       // If no projects exist, create default ones
       if (projectsData.length === 0) {
+        console.log('Creating default projects...')
         const defaultProjects = [
-          { name: 'Maitama Heights', budget: 850000, location: 'Maitama, Abuja' },
-          { name: 'Garki Site', budget: 750000, location: 'Garki, Abuja' },
-          { name: 'Jabi Lakeside', budget: 950000, location: 'Jabi, Abuja' },
-          { name: 'Asokoro Residences', budget: 1250000, location: 'Asokoro, Abuja' },
-          { name: 'Katampe Hills Estate', budget: 2450000, location: 'Katampe, Abuja' },
-          { name: 'Wuse II Towers', budget: 1850000, location: 'Wuse II, Abuja' }
+          { name: 'Maitama Heights', budget: 15000000, location: 'Maitama, Abuja' },
+          { name: 'Garki Site', budget: 12000000, location: 'Garki, Abuja' },
+          { name: 'Jabi Lakeside', budget: 25000000, location: 'Jabi, Abuja' },
+          { name: 'Asokoro Residences', budget: 18000000, location: 'Asokoro, Abuja' },
+          { name: 'Katampe Hills', budget: 20000000, location: 'Katampe, Abuja' },
+          { name: 'Wuse II Towers', budget: 30000000, location: 'Wuse II, Abuja' }
         ]
         
         // Add default projects to Firebase
@@ -40,8 +41,8 @@ export default function HomePage() {
         }
         
         // Fetch again
-        const newSnapshot = await getDocs(collection(db, 'projects'))
-        projectsData = newSnapshot.docs.map(doc => ({
+        projectsSnapshot = await getDocs(collection(db, 'projects'))
+        projectsData = projectsSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         }))
@@ -88,16 +89,19 @@ export default function HomePage() {
           <div className="bg-blue-600 rounded-lg p-6">
             <h3 className="text-lg opacity-80">Total Spent</h3>
             <p className="text-3xl font-bold">?{(totalSpent/1000000).toFixed(2)}M</p>
+            <p className="text-sm opacity-70">{expenses.length} expenses</p>
           </div>
           <div className="bg-green-600 rounded-lg p-6">
             <h3 className="text-lg opacity-80">Active Projects</h3>
             <p className="text-3xl font-bold">{projects.length}</p>
+            <p className="text-sm opacity-70">All projects</p>
           </div>
           <div className="bg-purple-600 rounded-lg p-6">
             <h3 className="text-lg opacity-80">Total Budget</h3>
             <p className="text-3xl font-bold">
               ?{(projects.reduce((sum, p) => sum + (p.budget || 0), 0)/1000000).toFixed(2)}M
             </p>
+            <p className="text-sm opacity-70">Combined budget</p>
           </div>
         </div>
 
@@ -177,6 +181,14 @@ export default function HomePage() {
             </table>
           </div>
         </div>
+
+        {/* Add Refresh Button */}
+        <button 
+          onClick={() => window.location.reload()} 
+          className="fixed bottom-8 right-8 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-lg"
+        >
+          Refresh Data
+        </button>
       </div>
     </div>
   )
