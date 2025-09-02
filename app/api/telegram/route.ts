@@ -1002,7 +1002,20 @@ export async function POST(req) {
     // TRY TO PARSE AS EXPENSE
     const amount = parseAmount(text)
     if (amount > 0) {
-      // Find project
+      const lowerText = text.toLowerCase()
+      
+      // VENDOR DETECTION FIRST - PRIORITY!
+      let vendor = 'Unknown'
+      
+      // Known Nigerian vendors - CHECK THESE FIRST!
+      if (lowerText.includes('dangote')) vendor = 'Dangote'
+      else if (lowerText.includes('bua')) vendor = 'BUA'
+      else if (lowerText.includes('julius') || lowerText.includes('berger')) vendor = 'Julius Berger'
+      else if (lowerText.includes('emos')) vendor = 'Emos'
+      else if (lowerText.includes('schneider')) vendor = 'Schneider'
+      else if (lowerText.includes('lafarge')) vendor = 'Lafarge'
+      
+      // Find project AFTER vendor
       const projects = await getDocs(collection(db, 'projects'))
       let projectName = 'Unassigned'
       
@@ -1128,3 +1141,4 @@ export async function POST(req) {
     return NextResponse.json({ ok: true })
   }
 }
+
