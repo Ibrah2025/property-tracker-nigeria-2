@@ -22,6 +22,8 @@ export default function HomePage() {
   const [editingExpense, setEditingExpense] = useState(null)
   const [editingProject, setEditingProject] = useState(null)
   const [editingVendor, setEditingVendor] = useState(null)
+  const [viewingProject, setViewingProject] = useState(null)
+  const [viewingProject, setViewingProject] = useState(null)
   const [notifications, setNotifications] = useState([])
   
   // Form States
@@ -1202,7 +1204,11 @@ export default function HomePage() {
                   const topCategory = Object.entries(projCategories).sort((a, b) => b[1] - a[1])[0]
                   
                   return (
-                    <div key={project.id} className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                    <div 
+                      key={project.id} 
+                      className="bg-gray-900 rounded-xl p-6 border border-gray-800 hover:border-blue-500 cursor-pointer transition-all hover:shadow-lg"
+                      onClick={() => setViewingProject(project)}
+                    >
                       <h4 className="text-lg font-semibold mb-4">{project.name}</h4>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
@@ -1729,6 +1735,141 @@ export default function HomePage() {
          </div>
        </div>
      )}
+
+     {/* Project Detail Modal */}
+      {viewingProject && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 rounded-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-start mb-6">
+              <h2 className="text-2xl font-bold">{viewingProject.name} - Detailed Analysis</h2>
+              <button
+                onClick={() => setViewingProject(null)}
+                className="text-gray-400 hover:text-white text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            
+            {(() => {
+              const projectExpenses = expenses.filter(e => e.project === viewingProject.name)
+              const spent = projectExpenses.reduce((sum, e) => sum + (e.amount || 0), 0)
+              const remaining = viewingProject.budget - spent
+              const progress = viewingProject.budget ? (spent / viewingProject.budget * 100) : 0
+              
+              const categoryBreakdown = {}
+              const vendorBreakdown = {}
+              const monthlyBreakdown = {}
+              
+              projectExpenses.forEach(e => {
+                categoryBreakdown[e.category || 'Other'] = (categoryBreakdown[e.category || 'Other'] || 0) + e.amount
+                vendorBreakdown[e.vendor || 'Unknown'] = (vendorBreakdown[e.vendor || 'Unknown'] || 0) + e.amount
+                
+                const month = new Date(e.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })
+                monthlyBreakdown[month] = (monthlyBreakdown[month] || 0) + e.amount
+              })
+              
+              return (
+                <>
+                  {/* Summary Stats */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div className="bg-gray-800 rounded-lg p-4">
+                      <div className="text-gray-400 text-sm">Budget</div>
+                      <div className="text-xl font-bold">{formatMoney(viewingProject.budget)}</div>
+                    </div>
+                    <div className="bg-gray-800 rounded-lg p-4">
+                      <div className="text-gray-400 text-sm">Spent</div>
+                      <div className="text-xl font-bold text-red-400">{formatMoney(spent)}</div>
+                    </div>
+                    <div className="bg-gray-800 rounded-lg p-4">
+                      <div className="text-gray-400 text-sm">Remaining</div>
+                      <div className="text-xl font-bold text-green-400">{formatMoney(remaining)}</div>
+                    </div>
+                    <div className="bg-gray-800 rounded-lg p-4">
+                      <div className="text-gray-400 text-sm">Progress</div>
+                      <div className="text-xl font-bold">{progress.toFixed(1)}%</div>
+                    </div>
+                  </div>
+                  
+                  {/* Progress Bar */}
+                  <div className="mb-6">
+                    <div className="w-full bg-gray-800 rounded-full h-4">
+                      <div 
+                        className={`h-4 rounded-full ${
+                          progress >= 90 ? 'bg-red-500' : 
+                          progress >= 70 ? 'bg-yellow-500' : 
+                          'bg-green-500'
+                        }`}
+                        style={{ width: `${Math.min(progress, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Breakdowns */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3">Category Breakdown</h3>
+                      <div className="space-y-2">
+                        {Object.entries(categoryBreakdown)
+                          .sort((a, b) => b[1] - a[1])
+                          .map(([cat, amt]) => (
+                            <div key={cat} className="flex justify-between">
+                              <span className="text-gray-400">{cat}</span>
+                              <span>{formatMoney(amt)} ({((amt/spent)*100).toFixed(1)}%)</span>
+                            </div>
+                          ))
+                        }
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3">Top Vendors</h3>
+                      <div className="space-y-2">
+                        {Object.entries(vendorBreakdown)
+                          .sort((a, b) => b[1] - a[1])
+                          .slice(0, 5)
+                          .map(([vendor, amt]) => (
+                            <div key={vendor} className="flex justify-between">
+                              <span className="text-gray-400">{vendor}</span>
+                              <span>{formatMoney(amt)}</span>
+                            </div>
+                          ))
+                        }
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Recent Expenses */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">Recent Expenses</h3>
+                    <div className="bg-gray-800 rounded-lg overflow-hidden">
+                      <table className="w-full">
+                        <thead className="bg-gray-700">
+                          <tr>
+                            <th className="px-4 py-2 text-left">Date</th>
+                            <th className="px-4 py-2 text-left">Amount</th>
+                            <th className="px-4 py-2 text-left">Vendor</th>
+                            <th className="px-4 py-2 text-left">Category</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {projectExpenses.slice(0, 10).map((exp, idx) => (
+                            <tr key={idx} className="border-t border-gray-700">
+                              <td className="px-4 py-2">{formatDate(exp.createdAt)}</td>
+                              <td className="px-4 py-2">{formatMoney(exp.amount)}</td>
+                              <td className="px-4 py-2">{exp.vendor || 'Unknown'}</td>
+                              <td className="px-4 py-2">{exp.category || 'Other'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              )
+            })()}
+          </div>
+        </div>
+      )}
 
      {/* Quick Action Buttons */}
      <div className="fixed bottom-8 right-8 flex flex-col gap-3">
