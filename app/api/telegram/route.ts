@@ -987,16 +987,16 @@ export async function POST(req) {
    }
    
    // EXPORT
-   if (cmd === 'export') {
-     await sendMessage(chatId, 
-       '<b> EXPORT DATA</b>\n\n' +
-       'Your data export is being prepared...\n\n' +
-       'Visit the web dashboard to download:\n' +
-       'https://property-tracker-f6byblman-ibrahim-abubakars-projects.vercel.app\n\n' +
-       'Click "Export Excel" button to download all data.'
-     )
-     return NextResponse.json({ ok: true })
-   }
+    if (cmd === 'export') {
+      await sendMessage(chatId, 
+        '<b>📥 EXPORT DATA</b>\n\n' +
+        'Your data export is being prepared...\n\n' +
+        'Visit the web dashboard to download:\n' +
+        'https://property-tracker-djkqs86bu-ibrahim-abubakars-projects.vercel.app\n\n' +
+        'Click "Export Excel" button to download all data.'
+      )
+      return NextResponse.json({ ok: true })
+    }
    
    // TRY TO PARSE AS EXPENSE
    const amount = parseAmount(text)
