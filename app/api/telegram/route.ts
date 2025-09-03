@@ -1018,27 +1018,8 @@ export async function POST(req) {
       else if (lowerText.includes('unicem')) vendor = 'Unicem'
       else if (lowerText.includes('ashaka')) vendor = 'Ashaka'
       
-      // If no company found, check for common vendor names or use last word
+      // If no company found, look for person name (last word that's not a material)
       if (vendor === 'Unknown') {
-        // Common person names that are vendors
-        if (lowerText.includes('musa')) vendor = 'Musa'
-        else if (lowerText.includes('ahmed')) vendor = 'Ahmed'
-        else if (lowerText.includes('john')) vendor = 'John'
-        else if (lowerText.includes('peter')) vendor = 'Peter'
-        else if (lowerText.includes('james')) vendor = 'James'
-        else if (lowerText.includes('ibrahim')) vendor = 'Ibrahim'
-        else if (lowerText.includes('ali')) vendor = 'Ali'
-        else if (lowerText.includes('usman')) vendor = 'Usman'
-        else if (lowerText.includes('mohammed')) vendor = 'Mohammed'
-        
-        // If still unknown and message contains "nails", the vendor is likely the last word
-        if (vendor === 'Unknown' && lowerText.includes('nails')) {
-          const lastWord = words[words.length - 1]
-          if (lastWord && !lastWord.match(/^\d/) && lastWord.length > 1) {
-            vendor = lastWord.charAt(0).toUpperCase() + lastWord.slice(1).toLowerCase()
-          }
-        }
-      }
         const materials = ['cement', 'blocks', 'sand', 'nails', 'paint', 'wood', 'tiles', 
                           'granite', 'marble', 'pipes', 'wire', 'rods', 'iron', 'steel']
         
