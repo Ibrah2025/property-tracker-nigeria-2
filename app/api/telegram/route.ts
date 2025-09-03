@@ -1029,6 +1029,25 @@ export async function POST(req) {
         const materials = ['cement', 'blocks', 'sand', 'nails', 'paint', 'wood', 'tiles', 
                           'granite', 'marble', 'pipes', 'wire', 'rods', 'iron', 'steel']
         
+        // Get the last word that could be a vendor
+        const lastWord = words[words.length - 1]
+        const secondLastWord = words.length > 1 ? words[words.length - 2] : null
+        
+        // Check if last word is a vendor (not a number, not k/m, not in materials)
+        if (lastWord && 
+            !lastWord.match(/^\d/) && 
+            !lastWord.toLowerCase().includes('k') && 
+            !lastWord.toLowerCase().includes('m') &&
+            !materials.includes(lastWord.toLowerCase())) {
+          vendor = lastWord.charAt(0).toUpperCase() + lastWord.slice(1).toLowerCase()
+        }
+        // If last word failed, check second-to-last (in case last is a location)
+        else if (secondLastWord && 
+                 !materials.includes(secondLastWord.toLowerCase()) &&
+                 !secondLastWord.match(/^\d/)) {
+          vendor = secondLastWord.charAt(0).toUpperCase() + secondLastWord.slice(1).toLowerCase()
+        }
+        
         // Check words from the end
         for (let i = words.length - 1; i >= 0; i--) {
           const word = words[i]
