@@ -1015,15 +1015,17 @@ export async function POST(req) {
      else if (lowerText.includes('unicem')) vendor = 'Unicem'
      else if (lowerText.includes('ashaka')) vendor = 'Ashaka'
      
-     // PROJECT DETECTION - AFTER VENDOR
-     let projectName = 'Unassigned'
-     if (lowerText.includes('maitama')) projectName = 'Maitama Heights'
-     else if (lowerText.includes('jabi')) projectName = 'Jabi Lakeside'
-     else if (lowerText.includes('garki')) projectName = 'Garki Site'
-     else if (lowerText.includes('katampe')) projectName = 'Katampe Hills'
-     else if (lowerText.includes('asokoro')) projectName = 'Asokoro Residences'
-     else if (lowerText.includes('wuse')) projectName = 'Wuse II Towers'
-     
+     // PROJECT DETECTION - Check actual projects from database
+      let projectName = 'Unassigned'
+      const projects = await getDocs(collection(db, 'projects'))
+      
+      projects.forEach(doc => {
+        const data = doc.data()
+        const projectKey = data.name.toLowerCase().split(' ')[0] // Get first word of project name
+        if (lowerText.includes(projectKey)) {
+          projectName = data.name
+        }
+      })
      // CATEGORY DETECTION
      let category = 'Other'
      if (lowerText.includes('cement')) category = 'Cement'
