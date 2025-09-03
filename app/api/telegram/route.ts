@@ -1068,36 +1068,6 @@ export async function POST(req) {
      else if (lowerText.includes('pop')) category = 'POP'
      else if (lowerText.includes('door') || lowerText.includes('window')) category = 'Doors/Windows'
      
-     // If vendor still unknown, use smart detection
-      if (vendor === 'Unknown') {
-        const words = text.split(' ')
-        // Take the LAST word as vendor (vendors usually come last in the message)
-        const lastWord = words[words.length - 1]
-        
-        // Only use it if it's not a number or amount
-        if (lastWord && !lastWord.match(/^\d/) && !lastWord.toLowerCase().includes('k') && !lastWord.toLowerCase().includes('m')) {
-          vendor = lastWord.charAt(0).toUpperCase() + lastWord.slice(1).toLowerCase()
-        }
-      }
-     if (vendor === 'Unknown') {
-       const words = text.split(' ')
-       const skipWords = ['maitama', 'jabi', 'garki', 'katampe', 'asokoro', 'wuse',
-                         'cement', 'blocks', 'sand', 'labour', 'transport', 'paint',
-                         'wood', 'roofing', 'tiles', 'plumbing', 'electrical']
-       
-       for (let i = words.length - 1; i >= 0; i--) {
-         const word = words[i]
-         const lowerWord = word.toLowerCase()
-         if (!word.match(/^\d/) && 
-             !lowerWord.includes('k') && 
-             !lowerWord.includes('m') &&
-             !skipWords.includes(lowerWord) && 
-             word.length > 1) {
-           vendor = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-           break
-         }
-       }
-     }
      
      // Save expense
      const docRef = await addDoc(collection(db, 'expenses'), {
