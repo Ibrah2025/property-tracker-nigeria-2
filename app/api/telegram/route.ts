@@ -1002,97 +1002,56 @@ export async function POST(req) {
    const amount = parseAmount(text)
    if (amount > 0) {
      const lowerText = text.toLowerCase()
+     const words = text.split(' ')
      
-    // VENDOR DETECTION - Smart detection
-      let vendor = 'Unknown'
-      
-      // Quick check for specific vendor names in the message
-      if (lowerText.includes(' musa')) vendor = 'Musa'
-      else if (lowerText.includes(' ahmed')) vendor = 'Ahmed'
-      else if (lowerText.includes(' ibrahim')) vendor = 'Ibrahim'
-      else if (lowerText.includes(' ali')) vendor = 'Ali'
-      const words = text.split(' ')
-      
-      // Known company vendors (check first)
-      if (lowerText.includes('dangote')) vendor = 'Dangote'
-      else if (lowerText.includes('bua')) vendor = 'BUA'
-      else if (lowerText.includes('julius') || lowerText.includes('berger')) vendor = 'Julius Berger'
-      else if (lowerText.includes('emos')) vendor = 'Emos'
-      else if (lowerText.includes('schneider')) vendor = 'Schneider'
-      else if (lowerText.includes('lafarge')) vendor = 'Lafarge'
-      else if (lowerText.includes('elephant')) vendor = 'Elephant Cement'
-      else if (lowerText.includes('unicem')) vendor = 'Unicem'
-      else if (lowerText.includes('ashaka')) vendor = 'Ashaka'
-      
-      // If no company found, look for person name (last word that's not a material)
-      if (vendor === 'Unknown') {
-        const materials = ['cement', 'blocks', 'sand', 'nails', 'paint', 'wood', 'tiles', 
-                          'granite', 'marble', 'pipes', 'wire', 'rods', 'iron', 'steel']
-        
-        // Get the last word that could be a vendor
-        const lastWord = words[words.length - 1]
-        const secondLastWord = words.length > 1 ? words[words.length - 2] : null
-        
-        // Project location keywords to exclude from vendor detection
-        const projectKeywords = ['maitama', 'jabi', 'garki', 'katampe', 'asokoro', 'wuse', 'kubwa']
-        
-       // If no company found, use the last word as vendor (simple and reliable)
-      if (vendor === 'Unknown') {
-        const lastWord = words[words.length - 1]
-        
-        // Only use last word if it's not a number or amount indicator
-        if (lastWord && 
-            !lastWord.match(/^\d/) && 
-            !lastWord.toLowerCase().includes('k') && 
-            !lastWord.toLowerCase().includes('m')) {
-          vendor = lastWord.charAt(0).toUpperCase() + lastWord.slice(1).toLowerCase()
-        }
-      }
-        // If last word failed, check second-to-last (in case last is a location)
-        else if (secondLastWord && 
-                 !materials.includes(secondLastWord.toLowerCase()) &&
-                 !secondLastWord.match(/^\d/)) {
-          vendor = secondLastWord.charAt(0).toUpperCase() + secondLastWord.slice(1).toLowerCase()
-        }
-        
-        // Check words from the end
-        for (let i = words.length - 1; i >= 0; i--) {
-          const word = words[i]
-          const wordLower = word.toLowerCase()
-          
-          // Skip numbers, amounts, materials, and project names
-          if (word.match(/^\d/) || 
-              wordLower.includes('k') || 
-              wordLower.includes('m') ||
-              materials.includes(wordLower) ||
-              wordLower === 'kubwa' ||
-              word.length <= 1) {
-            continue
-          }
-          
-          // This should be the vendor
-          vendor = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-          break
-        }
-      }
-      
+     // VENDOR DETECTION - Single, clean logic
+     let vendor = 'Unknown'
+     
+     // First check for known company vendors
+     if (lowerText.includes('dangote')) vendor = 'Dangote'
+     else if (lowerText.includes('bua')) vendor = 'BUA'
+     else if (lowerText.includes('julius') || lowerText.includes('berger')) vendor = 'Julius Berger'
+     else if (lowerText.includes('emos')) vendor = 'Emos'
+     else if (lowerText.includes('schneider')) vendor = 'Schneider'
+     else if (lowerText.includes('lafarge')) vendor = 'Lafarge'
+     else if (lowerText.includes('elephant')) vendor = 'Elephant Cement'
+     else if (lowerText.includes('unicem')) vendor = 'Unicem'
+     else if (lowerText.includes('ashaka')) vendor = 'Ashaka'
+     
+     // If no company vendor found, use the last word as vendor
+     // This works because users consistently put vendor names at the end
+     if (vendor === 'Unknown') {
+       const lastWord = words[words.length - 1]
+       
+       // Check if last word is valid (not a number or amount)
+       if (lastWord && 
+           !lastWord.match(/^\d/) && 
+           !lastWord.toLowerCase().includes('k') && 
+           !lastWord.toLowerCase().includes('m') &&
+           lastWord.length > 1) {
+         vendor = lastWord.charAt(0).toUpperCase() + lastWord.slice(1).toLowerCase()
+       }
+     }
      
      // PROJECT DETECTION - Check actual projects from database
-      let projectName = 'Unassigned'
-      const projects = await getDocs(collection(db, 'projects'))
-      
-      projects.forEach(doc => {
-        const data = doc.data()
-        const projectKey = data.name.toLowerCase().split(' ')[0] // Get first word of project name
-        if (lowerText.includes(projectKey)) {
-          projectName = data.name
-        }
-      })
+     let projectName = 'Unassigned'
+     const projects = await getDocs(collection(db, 'projects'))
+     
+     projects.forEach(doc => {
+       const data = doc.data()
+       const projectKey = data.name.toLowerCase().split(' ')[0] // Get first word of project name
+       if (lowerText.includes(projectKey)) {
+         projectName = data.name
+       }
+     })
+     
      // CATEGORY DETECTION
      let category = 'Other'
      if (lowerText.includes('cement')) category = 'Cement'
      else if (lowerText.includes('block')) category = 'Blocks'
      else if (lowerText.includes('sand')) category = 'Sand'
+     else if (lowerText.includes('nail')) category = 'Iron/Steel'
+     else if (lowerText.includes('iron') || lowerText.includes('steel') || lowerText.includes('rod')) category = 'Iron/Steel'
      else if (lowerText.includes('labour') || lowerText.includes('labor')) category = 'Labour'
      else if (lowerText.includes('transport')) category = 'Transport'
      else if (lowerText.includes('wood')) category = 'Wood'
@@ -1101,12 +1060,10 @@ export async function POST(req) {
      else if (lowerText.includes('electrical') || lowerText.includes('wire') || lowerText.includes('generator')) category = 'Electrical'
      else if (lowerText.includes('roofing')) category = 'Roofing'
      else if (lowerText.includes('tiles') || lowerText.includes('tile')) category = 'Tiles'
-      else if (lowerText.includes('nail') || lowerText.includes('iron') || lowerText.includes('steel') || lowerText.includes('rod')) category = 'Iron/Steel'
      else if (lowerText.includes('granite')) category = 'Granite'
      else if (lowerText.includes('marble')) category = 'Marble'
      else if (lowerText.includes('pop')) category = 'POP'
      else if (lowerText.includes('door') || lowerText.includes('window')) category = 'Doors/Windows'
-     
      
      // Save expense
      const docRef = await addDoc(collection(db, 'expenses'), {
@@ -1125,10 +1082,10 @@ export async function POST(req) {
      // Check project budget and send alert if needed
      let alertMsg = ''
      if (projectName !== 'Unassigned') {
-       const projects = await getDocs(collection(db, 'projects'))
+       const projectsCheck = await getDocs(collection(db, 'projects'))
        let projectData = null
        
-       projects.forEach(doc => {
+       projectsCheck.forEach(doc => {
          if (doc.data().name === projectName) {
            projectData = doc.data()
          }
@@ -1144,20 +1101,20 @@ export async function POST(req) {
          const percentage = (totalSpent/projectData.budget*100)
          
          if (percentage >= 100) {
-           alertMsg = '\n\n <b>ALERT: Project is OVER BUDGET!</b>'
+           alertMsg = '\n\n🔴 <b>ALERT: Project is OVER BUDGET!</b>'
          } else if (percentage >= 90) {
-           alertMsg = '\n\n <b>WARNING: 90% of budget used!</b>'
+           alertMsg = '\n\n🟡 <b>WARNING: 90% of budget used!</b>'
          } else if (percentage >= 75) {
-           alertMsg = '\n\n <b>NOTICE: 75% of budget used</b>'
+           alertMsg = '\n\n⚠️ <b>NOTICE: 75% of budget used</b>'
          }
          
          await sendMessage(chatId,
-           ` <b>EXPENSE SAVED!</b>\n\n` +
-           ` Amount: ${formatMoney(amount)}\n` +
-           ` Project: ${projectName}\n` +
-           ` Vendor: ${vendor}\n` +
-           ` Category: ${category}\n` +
-           ` Date: ${formatDate(new Date())}\n\n` +
+           `✅ <b>EXPENSE SAVED!</b>\n\n` +
+           `💰 Amount: ${formatMoney(amount)}\n` +
+           `🏗️ Project: ${projectName}\n` +
+           `👤 Vendor: ${vendor}\n` +
+           `📦 Category: ${category}\n` +
+           `📅 Date: ${formatDate(new Date())}\n\n` +
            `Project budget: ${formatMoney(projectData.budget)}\n` +
            `Total spent: ${formatMoney(totalSpent)} (${percentage.toFixed(1)}%)` +
            alertMsg
@@ -1167,23 +1124,22 @@ export async function POST(req) {
      }
      
      await sendMessage(chatId,
-       ` <b>EXPENSE SAVED!</b>\n\n` +
-       ` Amount: ${formatMoney(amount)}\n` +
-       ` Project: ${projectName}\n` +
-       ` Vendor: ${vendor}\n` +
-       ` Category: ${category}\n` +
-       ` Date: ${formatDate(new Date())}\n\n` +
+       `✅ <b>EXPENSE SAVED!</b>\n\n` +
+       `💰 Amount: ${formatMoney(amount)}\n` +
+       `🏗️ Project: ${projectName}\n` +
+       `👤 Vendor: ${vendor}\n` +
+       `📦 Category: ${category}\n` +
+       `📅 Date: ${formatDate(new Date())}\n\n` +
        `To cancel: <code>cancel</code>`
      )
    } else {
      await sendMessage(chatId, 
-       ' Command not recognized.\n\n' +
+       '❌ Command not recognized.\n\n' +
        'Type <code>menu</code> for full command list\n' +
        'Type <code>simple</code> for quick commands\n\n' +
        'Example expense: <code>500k cement Maitama</code>'
      )
-   }
-   
+   }  
    return NextResponse.json({ ok: true })
    
  } catch (error) {
