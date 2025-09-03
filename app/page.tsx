@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, limit, where } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
+import { offlineQueue } from '@/lib/offlineQueue' 
 
 export default function HomePage() {
   // State Management
