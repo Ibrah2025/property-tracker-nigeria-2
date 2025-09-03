@@ -494,6 +494,211 @@ export default function HomePage() {
     }
   }
 
+  const exportComprehensivePDF = async () => {
+    try {
+      const { default: jsPDF } = await import('jspdf')
+      const { default: autoTable } = await import('jspdf-autotable')
+      
+      const doc = new jsPDF()
+      let yPosition = 15
+      
+      // Cover Page
+      doc.setFontSize(24)
+      doc.text('PROPERTY TRACKER', 105, yPosition, { align: 'center' })
+      yPosition += 10
+      doc.setFontSize(16)
+      doc.text('Construction Management Report', 105, yPosition, { align: 'center' })
+      yPosition += 10
+      doc.setFontSize(12)
+      doc.text(`Generated: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, 105, yPosition, { align: 'center' })
+      
+      // Executive Summary
+      yPosition += 20
+      doc.setFontSize(14)
+      doc.setFont(undefined, 'bold')
+      doc.text('EXECUTIVE SUMMARY', 14, yPosition)
+      doc.setFont(undefined, 'normal')
+      yPosition += 10
+      
+      const stats = calculateStats()
+      doc.setFontSize(10)
+      const summaryData = [
+        [`Total Budget: ${formatMoney(stats.totalBudget)}`, `Total Spent: ${formatMoney(stats.totalSpent)}`],
+        [`Budget Utilization: ${stats.budgetUsed.toFixed(1)}%`, `Budget Remaining: ${formatMoney(stats.totalBudget - stats.totalSpent)}`],
+        [`Active Projects: ${stats.activeProjects}`, `Completed Projects: ${stats.completedProjects}`],
+        [`Total Expenses: ${stats.totalExpenses}`, `Average Expense: ${formatMoney(stats.averageExpense)}`]
+      ]
+      
+      summaryData.forEach(row => {
+        doc.text(row[0], 14, yPosition)
+        doc.text(row[1], 110, yPosition)
+        yPosition += 7
+      })
+      
+      // Projects Detailed Analysis
+      doc.addPage()
+      doc.setFontSize(16)
+      doc.text('PROJECTS ANALYSIS', 14, 15)
+      
+      const projectsData = projects.map(p => {
+        const projectExpenses = getProjectExpenses(p.name)
+        const spent = projectExpenses.reduce((sum, e) => sum + (e.amount || 0), 0)
+        return [
+          p.name,
+          formatMoney(p.budget),
+          formatMoney(spent),
+          formatMoney(p.budget - spent),
+          `${((spent/p.budget)*100).toFixed(1)}%`,
+          p.status || 'Active'
+        ]
+      })
+      
+      autoTable(doc, {
+        head: [['Project', 'Budget', 'Spent', 'Remaining', 'Progress', 'Status']],
+        body: projectsData,
+        startY: 25,
+        theme: 'striped',
+        headStyles: { 
+          fillColor: [31, 41, 55],
+          fontSize: 10,
+          fontStyle: 'bold'
+        },
+        styles: { fontSize: 9 }
+      })
+      
+      // Expenses Detailed List
+      doc.addPage()
+      doc.setFontSize(16)
+      doc.text('EXPENSES DETAILED REPORT', 14, 15)
+      
+      const expensesData = getFilteredExpenses().map(e => [
+        e.date || new Date(e.createdAt).toLocaleDateString(),
+        formatMoney(e.amount),
+        e.project || 'Unassigned',
+        e.vendor || 'Unknown',
+        e.category || 'Other',
+        e.description || '',
+        e.source || 'Web'
+      ])
+      
+      autoTable(doc, {
+        head: [['Date', 'Amount', 'Project', 'Vendor', 'Category', 'Description', 'Source']],
+        body: expensesData,
+        startY: 25,
+        theme: 'striped',
+        headStyles: { 
+          fillColor: [31, 41, 55],
+          fontSize: 9,
+          fontStyle: 'bold'
+        },
+        styles: { 
+          fontSize: 8,
+          cellPadding: 2
+        },
+        columnStyles: {
+          5: { cellWidth: 40 }
+        }
+      })
+      
+      // Vendors Analysis
+      doc.addPage()
+      doc.setFontSize(16)
+      doc.text('VENDORS ANALYSIS', 14, 15)
+      
+      const vendorsData = vendors.map(v => {
+        const vendorExpenses = expenses.filter(e => e.vendor === v.name)
+        const totalSpent = vendorExpenses.reduce((sum, e) => sum + (e.amount || 0), 0)
+        return [
+          v.name,
+          v.type || 'General',
+          v.contact || 'N/A',
+          v.email || 'N/A',
+          vendorExpenses.length.toString(),
+          formatMoney(totalSpent)
+        ]
+      })
+      
+      autoTable(doc, {
+        head: [['Vendor', 'Type', 'Contact', 'Email', 'Transactions', 'Total Spent']],
+        body: vendorsData,
+        startY: 25,
+        theme: 'striped',
+        headStyles: { 
+          fillColor: [31, 41, 55],
+          fontSize: 10,
+          fontStyle: 'bold'
+        },
+        styles: { fontSize: 9 }
+      })
+      
+      // Category Analysis
+      doc.addPage()
+      doc.setFontSize(16)
+      doc.text('CATEGORY BREAKDOWN', 14, 15)
+      
+      const categoryTotals = getCategoryTotals()
+      const categoryData = categoryTotals.map(([category, amount]) => [
+        category,
+        formatMoney(amount),
+        `${((amount/stats.totalSpent)*100).toFixed(1)}%`
+      ])
+      
+      autoTable(doc, {
+        head: [['Category', 'Total Spent', 'Percentage']],
+        body: categoryData,
+        startY: 25,
+        theme: 'striped',
+        headStyles: { 
+          fillColor: [31, 41, 55],
+          fontSize: 10,
+          fontStyle: 'bold'
+        },
+        styles: { fontSize: 9 }
+      })
+      
+      // Monthly Trend
+      doc.addPage()
+      doc.setFontSize(16)
+      doc.text('MONTHLY SPENDING TREND', 14, 15)
+      
+      const monthlyData = getMonthlyTrend().map(item => [
+        item.month,
+        formatMoney(item.amount)
+      ])
+      
+      autoTable(doc, {
+        head: [['Month', 'Amount Spent']],
+        body: monthlyData,
+        startY: 25,
+        theme: 'striped',
+        headStyles: { 
+          fillColor: [31, 41, 55],
+          fontSize: 10,
+          fontStyle: 'bold'
+        },
+        styles: { fontSize: 9 }
+      })
+      
+      // Footer on last page
+      const pageCount = doc.internal.getNumberOfPages()
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i)
+        doc.setFontSize(8)
+        doc.text(`Page ${i} of ${pageCount}`, 105, 285, { align: 'center' })
+        doc.text('Property Tracker - Construction Management System', 105, 290, { align: 'center' })
+      }
+      
+      // Save PDF
+      const date = new Date().toISOString().split('T')[0]
+      doc.save(`PropertyTracker_Complete_Report_${date}.pdf`)
+      
+      showNotification('success', 'Comprehensive PDF report downloaded successfully')
+    } catch (error) {
+      console.error('Error exporting comprehensive PDF:', error)
+      showNotification('error', 'Failed to export PDF report')
+    }
+  }
+
   // Export Function
   const exportToExcel = async () => {
     try {
@@ -692,6 +897,15 @@ export default function HomePage() {
                 className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
               >
                 Export Excel
+              </button>
+              <button
+                onClick={exportComprehensivePDF}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Export PDF
               </button>
               <button
                 onClick={fetchAllData}
