@@ -1003,17 +1003,40 @@ export async function POST(req) {
    if (amount > 0) {
      const lowerText = text.toLowerCase()
      
-     // VENDOR DETECTION - CHECK THESE FIRST BEFORE ANYTHING!
-     let vendor = 'Unknown'
-     if (lowerText.includes('dangote')) vendor = 'Dangote'
-     else if (lowerText.includes('bua')) vendor = 'BUA'
-     else if (lowerText.includes('julius') || lowerText.includes('berger')) vendor = 'Julius Berger'
-     else if (lowerText.includes('emos')) vendor = 'Emos'
-     else if (lowerText.includes('schneider')) vendor = 'Schneider'
-     else if (lowerText.includes('lafarge')) vendor = 'Lafarge'
-     else if (lowerText.includes('elephant')) vendor = 'Elephant Cement'
-     else if (lowerText.includes('unicem')) vendor = 'Unicem'
-     else if (lowerText.includes('ashaka')) vendor = 'Ashaka'
+    // VENDOR DETECTION - Smart detection
+      let vendor = 'Unknown'
+      const words = text.split(' ')
+      
+      // Known company vendors (check first)
+      if (lowerText.includes('dangote')) vendor = 'Dangote'
+      else if (lowerText.includes('bua')) vendor = 'BUA'
+      else if (lowerText.includes('julius') || lowerText.includes('berger')) vendor = 'Julius Berger'
+      else if (lowerText.includes('emos')) vendor = 'Emos'
+      else if (lowerText.includes('schneider')) vendor = 'Schneider'
+      else if (lowerText.includes('lafarge')) vendor = 'Lafarge'
+      else if (lowerText.includes('elephant')) vendor = 'Elephant Cement'
+      else if (lowerText.includes('unicem')) vendor = 'Unicem'
+      else if (lowerText.includes('ashaka')) vendor = 'Ashaka'
+      
+      // If no company found, look for person name (last word that's not a material)
+      if (vendor === 'Unknown') {
+        const materials = ['cement', 'blocks', 'sand', 'nails', 'paint', 'wood', 'tiles', 
+                          'granite', 'marble', 'pipes', 'wire', 'rods', 'iron', 'steel']
+        
+        for (let i = words.length - 1; i >= 0; i--) {
+          const word = words[i]
+          const wordLower = word.toLowerCase()
+          
+          if (!word.match(/^\d/) && 
+              !wordLower.includes('k') && 
+              !wordLower.includes('m') &&
+              !materials.includes(wordLower) &&
+              word.length > 1) {
+            vendor = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            break
+          }
+        }
+      }
      
      // PROJECT DETECTION - Check actual projects from database
       let projectName = 'Unassigned'
