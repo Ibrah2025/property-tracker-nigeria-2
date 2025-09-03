@@ -1068,7 +1068,17 @@ export async function POST(req) {
      else if (lowerText.includes('pop')) category = 'POP'
      else if (lowerText.includes('door') || lowerText.includes('window')) category = 'Doors/Windows'
      
-     // If vendor still unknown, check for other words (but NOT project names)
+     // If vendor still unknown, use smart detection
+      if (vendor === 'Unknown') {
+        const words = text.split(' ')
+        // Take the LAST word as vendor (vendors usually come last in the message)
+        const lastWord = words[words.length - 1]
+        
+        // Only use it if it's not a number or amount
+        if (lastWord && !lastWord.match(/^\d/) && !lastWord.toLowerCase().includes('k') && !lastWord.toLowerCase().includes('m')) {
+          vendor = lastWord.charAt(0).toUpperCase() + lastWord.slice(1).toLowerCase()
+        }
+      }
      if (vendor === 'Unknown') {
        const words = text.split(' ')
        const skipWords = ['maitama', 'jabi', 'garki', 'katampe', 'asokoro', 'wuse',
