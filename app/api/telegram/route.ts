@@ -1018,18 +1018,10 @@ export async function POST(req) {
       else if (lowerText.includes('unicem')) vendor = 'Unicem'
       else if (lowerText.includes('ashaka')) vendor = 'Ashaka'
       
-      // If no company vendor, use last word as vendor
+      // If no company vendor, ALWAYS use last word as vendor
       if (vendor === 'Unknown') {
         const lastWord = words[words.length - 1]
-        
-        // Check if last word is valid
-        if (lastWord && 
-            !lastWord.match(/^\d/) && 
-            !lastWord.toLowerCase().includes('k') && 
-            !lastWord.toLowerCase().includes('m') &&
-            lastWord.length > 1) {
-          vendor = lastWord.charAt(0).toUpperCase() + lastWord.slice(1).toLowerCase()
-        }
+        vendor = lastWord.charAt(0).toUpperCase() + lastWord.slice(1).toLowerCase()
       }
       
       // PROJECT DETECTION - From database
