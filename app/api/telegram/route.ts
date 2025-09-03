@@ -1005,6 +1005,12 @@ export async function POST(req) {
      
     // VENDOR DETECTION - Smart detection
       let vendor = 'Unknown'
+      
+      // Quick check for specific vendor names in the message
+      if (lowerText.includes(' musa')) vendor = 'Musa'
+      else if (lowerText.includes(' ahmed')) vendor = 'Ahmed'
+      else if (lowerText.includes(' ibrahim')) vendor = 'Ibrahim'
+      else if (lowerText.includes(' ali')) vendor = 'Ali'
       const words = text.split(' ')
       
       // Known company vendors (check first)
