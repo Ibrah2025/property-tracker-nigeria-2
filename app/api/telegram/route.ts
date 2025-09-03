@@ -1033,12 +1033,16 @@ export async function POST(req) {
         const lastWord = words[words.length - 1]
         const secondLastWord = words.length > 1 ? words[words.length - 2] : null
         
-        // Check if last word is a vendor (not a number, not k/m, not in materials)
+        // Project location keywords to exclude from vendor detection
+        const projectKeywords = ['maitama', 'jabi', 'garki', 'katampe', 'asokoro', 'wuse', 'kubwa']
+        
+        // Check if last word is a vendor (not a number, not k/m, not material, not project)
         if (lastWord && 
             !lastWord.match(/^\d/) && 
             !lastWord.toLowerCase().includes('k') && 
             !lastWord.toLowerCase().includes('m') &&
-            !materials.includes(lastWord.toLowerCase())) {
+            !materials.includes(lastWord.toLowerCase()) &&
+            !projectKeywords.includes(lastWord.toLowerCase())) {
           vendor = lastWord.charAt(0).toUpperCase() + lastWord.slice(1).toLowerCase()
         }
         // If last word failed, check second-to-last (in case last is a location)
