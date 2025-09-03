@@ -1023,20 +1023,27 @@ export async function POST(req) {
         const materials = ['cement', 'blocks', 'sand', 'nails', 'paint', 'wood', 'tiles', 
                           'granite', 'marble', 'pipes', 'wire', 'rods', 'iron', 'steel']
         
+        // Check words from the end
         for (let i = words.length - 1; i >= 0; i--) {
           const word = words[i]
           const wordLower = word.toLowerCase()
           
-          if (!word.match(/^\d/) && 
-              !wordLower.includes('k') && 
-              !wordLower.includes('m') &&
-              !materials.includes(wordLower) &&
-              word.length > 1) {
-            vendor = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-            break
+          // Skip numbers, amounts, materials, and project names
+          if (word.match(/^\d/) || 
+              wordLower.includes('k') || 
+              wordLower.includes('m') ||
+              materials.includes(wordLower) ||
+              wordLower === 'kubwa' ||
+              word.length <= 1) {
+            continue
           }
+          
+          // This should be the vendor
+          vendor = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          break
         }
       }
+      
      
      // PROJECT DETECTION - Check actual projects from database
       let projectName = 'Unassigned'
@@ -1062,7 +1069,7 @@ export async function POST(req) {
      else if (lowerText.includes('electrical') || lowerText.includes('wire') || lowerText.includes('generator')) category = 'Electrical'
      else if (lowerText.includes('roofing')) category = 'Roofing'
      else if (lowerText.includes('tiles') || lowerText.includes('tile')) category = 'Tiles'
-     else if (lowerText.includes('iron') || lowerText.includes('steel') || lowerText.includes('rod')) category = 'Iron/Steel'
+      else if (lowerText.includes('nail') || lowerText.includes('iron') || lowerText.includes('steel') || lowerText.includes('rod')) category = 'Iron/Steel'
      else if (lowerText.includes('granite')) category = 'Granite'
      else if (lowerText.includes('marble')) category = 'Marble'
      else if (lowerText.includes('pop')) category = 'POP'
